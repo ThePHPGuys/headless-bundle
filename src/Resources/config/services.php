@@ -1,6 +1,8 @@
 <?php
 
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
+use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
+use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
 use Tpg\HeadlessBundle\Extension\ExecutorOrmExtension;
 use Tpg\HeadlessBundle\Extension\FiltersExtension;
@@ -46,13 +48,28 @@ return static function (ContainerConfigurator $container) {
     $services->set(ItemDenormalizer::class)->autoconfigure(false);
     $services->set(ValidationExceptionNormalizer::class);
 
+    $services->set('headless.item.denormalizer.object',ObjectNormalizer::class)
+        ->autoconfigure(false)
+        ->args([
+            service('serializer.mapping.class_metadata_factory'),
+            service('serializer.name_converter.metadata_aware'),
+            service('serializer.property_accessor'),
+            service('property_info')->ignoreOnInvalid(),
+            service('serializer.mapping.class_discriminator_resolver')->ignoreOnInvalid(),
+            null,
+            [],
+        ]);
+
+    $services->set('headless.item.denormalizer.array', ArrayDenormalizer::class)
+        ->autoconfigure(false);
+
     $services->set('headless.item.denormalizer',Serializer::class)
         ->autoconfigure(false)
         ->arg('$normalizers',[
             service(ItemDenormalizer::class),
             service('serializer.normalizer.datetime'),
-            service('serializer.normalizer.object'),
-            service('serializer.denormalizer.array')
+            service('headless.item.denormalizer.object'),
+            service('headless.item.denormalizer.array')
         ]);
     $services->set(DataHydrator::class)
         ->arg('$denormalizer',service('headless.item.denormalizer'));

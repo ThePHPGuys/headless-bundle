@@ -1,0 +1,20 @@
+tpg-create-action:
+    path: /{collection}/
+    methods: "POST"
+    controller: Tpg\HeadlessBundle\Controller\CreateAction
+tpg-delete-action:
+    path: /{collection}/{id}/
+    methods: "DELETE"
+    controller: Tpg\HeadlessBundle\Controller\DeleteAction
+tpg-get-many-action:
+    path: /{collection}/
+    methods: "GET"
+    controller: Tpg\HeadlessBundle\Controller\GetManyAction
+tpg-get-one-action:
+    path: /{collection}/{id}/
+    methods: "GET"
+    controller: Tpg\HeadlessBundle\Controller\GetOneAction
+tpg-update-action-action:
+    path: /{collection}/{id}/
+    methods: "PUT"
+    controller: Tpg\HeadlessBundle\Controller\UpdateAction

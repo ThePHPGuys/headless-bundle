@@ -1,0 +1,30 @@
+{
+    "name": "tpg/headless-bundle",
+    "type": "symfony-bundle",
+    "autoload": {
+        "psr-4": {
+            "Tpg\\HeadlessBundle\\": "src/"
+        }
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Vadim",
+            "email": "vadim@thephpguys.com"
+        }
+    ],
+    "require": {
+      "doctrine/doctrine-bundle": "^2.5",
+      "doctrine/orm": "^2.11",
+      "symfony/serializer": "5.4.*",
+      "symfony/framework-bundle": "5.4.*",
+      "symfony/property-access": "5.4.*",
+      "symfony/property-info": "5.4.*",
+      "symfony/validator": "5.4.*",
+      "php": "^7.4.25",
+      "ext-json": "*"
+    },
+    "config": {
+      "sort-packages": true
+    }
+}

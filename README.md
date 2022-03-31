@@ -11,7 +11,7 @@ Applications that use Symfony Flex
 Open a command console, enter your project directory and execute:
 
 ```console
-$ composer require tpg/headless-bundle
+$ composer require thephpguys/headless-bundle
 ```
 
 Applications that don't use Symfony Flex
@@ -23,7 +23,7 @@ Open a command console, enter your project directory and execute the
 following command to download the latest stable version of this bundle:
 
 ```console
-$ composer require tpg/headless-bundle
+$ composer require thephpguys/headless-bundle
 ```
 
 ### Step 2: Enable the Bundle

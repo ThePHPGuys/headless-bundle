@@ -1,5 +1,5 @@
 {
-    "name": "tpg/headless-bundle",
+    "name": "thephpguys/headless-bundle",
     "type": "symfony-bundle",
     "autoload": {
         "psr-4": {

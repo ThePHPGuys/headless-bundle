@@ -16,10 +16,13 @@ final class Direction
 
     private function __construct(string $direction)
     {
-        if(!in_array(strtoupper($direction),[self::ASC,self::DESC])){
+        $normalizedDirection = strtoupper($direction);
+
+        if(!in_array($normalizedDirection,[self::ASC,self::DESC],true)){
             throw new \InvalidArgumentException('Incorrect direction');
         }
-        $this->direction = $direction;
+
+        $this->direction = $normalizedDirection;
     }
 
     /**
@@ -37,7 +40,7 @@ final class Direction
      */
     public function isDescending():bool
     {
-        return $this->direction === self::ASC;
+        return $this->direction === self::DESC;
     }
 
     public static function asc():self

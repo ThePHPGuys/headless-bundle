@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Tpg\HeadlessBundle\Service;
 
 
+use Symfony\Component\Validator\Constraint;
+use Tpg\HeadlessBundle\Ast\Collection;
 use Tpg\HeadlessBundle\Exception\NotFoundException;
 use Tpg\HeadlessBundle\Exception\ValidationException;
 use Tpg\HeadlessBundle\Extension\PageableContextBuilder;
@@ -13,23 +15,25 @@ use Tpg\HeadlessBundle\Query\Fields;
 use Tpg\HeadlessBundle\Query\Page;
 use Tpg\HeadlessBundle\Query\Pageable;
 use Tpg\HeadlessBundle\Request\ModifyItemRequest;
-use Tpg\HeadlessBundle\Security\Subject\Operation;
+use Tpg\HeadlessBundle\Security\Subject\AccessOperation;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 
 final class ItemsService
 {
-    private AstFactory $astFactory;
+    private SecuredAstFactory $astFactory;
     private ExecutorORM $astExecutorORM;
     private DataHydrator $dataExtractor;
     private ValidatorInterface $validator;
     private EntityManagerInterface $entityManager;
     private SecurityService $securityService;
     private SchemaService $schemaService;
+    private const CREATE_VALIDATION_GROUP = 'headless:create';
+    private const UPDATE_VALIDATION_GROUP = 'headless:update';
 
     public function __construct(
-        AstFactory $astFactory, ExecutorORM $astExecutorORM, DataHydrator $dataExtractor,
+        SecuredAstFactory $astFactory, ExecutorORM $astExecutorORM, DataHydrator $dataExtractor,
         ValidatorInterface $validator, EntityManagerInterface $entityManager, SecurityService $securityService,
         SchemaService $schemaService
     )
@@ -45,14 +49,16 @@ final class ItemsService
 
     public function getMany(string $collection, Fields $fields, array $context=[]):array
     {
-        $collectionAst = $this->securityService->filterAst($this->astFactory->fromFields($collection,$fields));
-        return $this->astExecutorORM->getMany($collectionAst,$context);
+        return $this->astExecutorORM->getMany(
+            $this->astFactory->createCollectionAstFromFields($collection,$fields,AccessOperation::READ),
+            $context
+        );
     }
 
     public function getOne(string $collection, string $id, Fields $fields, array $context=[]):array
     {
         return $this->astExecutorORM->getOne(
-            $this->securityService->filterAst($this->astFactory->fromFields($collection,$fields)),
+            $this->astFactory->createCollectionAstFromFields($collection,$fields,AccessOperation::READ),
             $id,
             $context
         );
@@ -73,7 +79,7 @@ final class ItemsService
 
     public function create(string $collection, ModifyItemRequest $request):object
     {
-        if(!$this->securityService->isCollectionGranted($collection,Operation::CREATE)){
+        if(!$this->securityService->isCollectionGranted($collection,AccessOperation::CREATE)){
             throw new \RuntimeException('Access denied');
         }
         $item = $this->dataExtractor->createObject(
@@ -81,11 +87,11 @@ final class ItemsService
             $request->getData()
         );
 
-        $violations = $this->validator->validate($item);
+        $violations = $this->validator->validate($item,null,[Constraint::DEFAULT_GROUP,self::CREATE_VALIDATION_GROUP]);
 
         ValidationException::assertValid($violations);;
 
-        if(!$this->securityService->isItemGranted($collection, $item, Operation::CREATE)){
+        if(!$this->securityService->isItemGranted($collection, $item, AccessOperation::CREATE)){
             throw new \RuntimeException('Access denied');
         }
 
@@ -99,7 +105,7 @@ final class ItemsService
      */
     public function update(string $collection, string $id, array $data):object
     {
-        if(!$this->securityService->isCollectionGranted($collection,Operation::UPDATE)){
+        if(!$this->securityService->isCollectionGranted($collection,AccessOperation::UPDATE)){
             throw new \RuntimeException('Access denied');
         }
 
@@ -112,14 +118,14 @@ final class ItemsService
         $item = $this->dataExtractor->hydrateObject(
             $collection,
             $item,
-            $this->securityService->filterEntityData($collection, $data, Operation::UPDATE)
+            $this->securityService->filterEntityData($collection, $data, AccessOperation::UPDATE)
         );
 
-        $violations = $this->validator->validate($item);
+        $violations = $this->validator->validate($item,null,[Constraint::DEFAULT_GROUP,self::UPDATE_VALIDATION_GROUP]);
 
         ValidationException::assertValid($violations);
 
-        if(!$this->securityService->isItemGranted($collection, $item, Operation::UPDATE)){
+        if(!$this->securityService->isItemGranted($collection, $item, AccessOperation::UPDATE)){
             throw new \RuntimeException('Access denied');
         }
 
@@ -129,7 +135,7 @@ final class ItemsService
 
     public function delete(string $collection, string $id):void
     {
-        if(!$this->securityService->isCollectionGranted($collection,Operation::DELETE)){
+        if(!$this->securityService->isCollectionGranted($collection,AccessOperation::DELETE)){
             throw new \RuntimeException('Access denied');
         }
         $item = $this->entityManager->find($this->schemaService->getCollection($collection)->class,$id);
@@ -138,7 +144,7 @@ final class ItemsService
             return;
         }
 
-        if(!$this->securityService->isItemGranted($collection, $item, Operation::DELETE)){
+        if(!$this->securityService->isItemGranted($collection, $item, AccessOperation::DELETE)){
             throw new \RuntimeException('Access denied');
         }
 

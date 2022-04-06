@@ -9,6 +9,7 @@ use Tpg\HeadlessBundle\Ast\Collection;
 use Tpg\HeadlessBundle\Ast\RelationToOne;
 use Tpg\HeadlessBundle\Ast\Walker\CollectionToORMQueryBuilder;
 use Tpg\HeadlessBundle\Exception\NotFoundException;
+use Tpg\HeadlessBundle\Extension\ExecutorOrmContextBuilder;
 use Tpg\HeadlessBundle\Extension\ExecutorOrmExtension;
 use Tpg\HeadlessBundle\Schema\Relation;
 use Doctrine\Common\Collections\Criteria;
@@ -17,12 +18,7 @@ use Doctrine\ORM\QueryBuilder;
 
 final class ExecutorORM
 {
-    public const TAG = 'headless.executor.orm.extension';
     private const HIDDEN_RELATED_FIELD = '__relId';
-    public const OPERATION_CONTEXT_KEY = 'operation';
-    public const OPERATION_COUNT = 'count';
-    public const OPERATION_MANY = 'many';
-    public const OPERATION_ONE = 'one';
     private SchemaService $schemaService;
     private EntityManagerInterface $entityManager;
     /** @var array<ExecutorOrmExtension> */
@@ -49,7 +45,7 @@ final class ExecutorORM
             $builder,
             $collectionAst->collectionName,
             $walker->getDeferredRelations(),
-            array_merge($context,[self::OPERATION_CONTEXT_KEY => self::OPERATION_MANY])
+            (new ExecutorOrmContextBuilder())->withContext($context)->withGetMany()->toArray()
         );
     }
 
@@ -71,7 +67,7 @@ final class ExecutorORM
         $this->applyExtensions(
             $collection,
             $queryBuilder,
-            array_merge($context,[self::OPERATION_CONTEXT_KEY => self::OPERATION_COUNT])
+            (new ExecutorOrmContextBuilder())->withContext($context)->withCount()->toArray()
         );
         return (int)$queryBuilder->getQuery()->getSingleScalarResult();
     }
@@ -85,7 +81,7 @@ final class ExecutorORM
             $builder,
             $collectionAst->collectionName,
             $walker->getDeferredRelations(),
-            array_merge($context, [self::OPERATION_CONTEXT_KEY => self::OPERATION_ONE])
+            (new ExecutorOrmContextBuilder())->withContext($context)->withGetOne()->toArray()
         );
 
         if (count($result) === 0) {

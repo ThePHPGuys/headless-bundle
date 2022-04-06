@@ -20,10 +20,10 @@ class AstFactory
         $this->schemaService = $schemaService;
     }
 
-    public function fromFields(string $collection, Fields $query):Collection
+    public function createCollectionAstFromFields(string $collection, Fields $fields):Collection
     {
         $ast = Collection::create($collection);
-        $ast->children = $this->parseFields($collection, $query->fields());
+        $ast->children = $this->parseFields($collection, $fields->fields());
         return $ast;
     }
 

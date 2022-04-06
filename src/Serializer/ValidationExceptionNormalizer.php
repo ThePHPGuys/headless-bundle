@@ -19,7 +19,7 @@ final class ValidationExceptionNormalizer implements NormalizerInterface, Normal
      */
     public function normalize($object, string $format = null, array $context = [])
     {
-        return ['error'=>$this->normalizer->normalize($object->violationList)];
+        return $this->normalizer->normalize($object->violationList);
     }
 
     public function supportsNormalization($data, string $format = null)

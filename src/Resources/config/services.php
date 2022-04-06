@@ -21,6 +21,7 @@ use Tpg\HeadlessBundle\Service\DataHydrator;
 use Tpg\HeadlessBundle\Service\ExecutorORM;
 use Tpg\HeadlessBundle\Service\ItemsService;
 use Tpg\HeadlessBundle\Service\SchemaService;
+use Tpg\HeadlessBundle\Service\SecuredAstFactory;
 use Tpg\HeadlessBundle\Service\SecurityChecker;
 use Tpg\HeadlessBundle\Service\SecurityService;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
@@ -75,6 +76,7 @@ return static function (ContainerConfigurator $container) {
         ->arg('$denormalizer',service('headless.item.denormalizer'));
     $services->set(SchemaService::class);
     $services->alias(Schema::class,SchemaService::class);
+    $services->set(SecuredAstFactory::class);
 
     $services->set(PageableResolver::class);
     $services->set(FiltersResolver::class);

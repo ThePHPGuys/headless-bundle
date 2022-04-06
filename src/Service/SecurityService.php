@@ -48,9 +48,9 @@ final class SecurityService
         return $data;
     }
 
-    public function filterAst(Collection $node):Collection
+    public function filterCollectionAst(Collection $node,string $operation):Collection
     {
-        return (new SecurityWalker($this->securityChecker))->getEffective($node);
+        return (new SecurityWalker($this->securityChecker,$operation))->getEffective($node);
     }
 
     public function isFieldGranted(string $collection, string $field, string $operation):bool

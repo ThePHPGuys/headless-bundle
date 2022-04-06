@@ -13,15 +13,17 @@ use Tpg\HeadlessBundle\Ast\RelationToOne;
 use Tpg\HeadlessBundle\Security\Checker;
 use Tpg\HeadlessBundle\Security\Subject\Collection as CollectionSubject;
 use Tpg\HeadlessBundle\Security\Subject\Field as FieldSubject;
-use Tpg\HeadlessBundle\Security\Subject\Operation;
+use Tpg\HeadlessBundle\Security\Subject\AccessOperation;
 
 final class SecurityWalker implements AstWalker
 {
     private Checker $checker;
+    private string $operation;
 
-    public function __construct(Checker $checker)
+    public function __construct(Checker $checker,string $operation=AccessOperation::READ)
     {
         $this->checker = $checker;
+        $this->operation = $operation;
     }
 
     private function isField(Node $node):bool
@@ -36,13 +38,13 @@ final class SecurityWalker implements AstWalker
 
     private function isFieldGranted(string $collection, string $field):bool
     {
-        return $this->checker->isGranted(Operation::READ,
+        return $this->checker->isGranted($this->operation,
             new FieldSubject($collection,$field));
     }
 
     private function isCollectionGranted(string $collection):bool
     {
-        return $this->checker->isGranted(Operation::READ,
+        return $this->checker->isGranted($this->operation,
             new CollectionSubject($collection));
     }
 

@@ -21,7 +21,7 @@ final class FiltersExtension implements ExecutorOrmExtension
 
     public function supports(string $collection, QueryBuilder $queryBuilder, array $context = []): bool
     {
-        return array_key_exists(self::CONTEXT_KEY,$context) && in_array($context[ExecutorORM::OPERATION_CONTEXT_KEY],[ExecutorORM::OPERATION_MANY,ExecutorORM::OPERATION_COUNT],true);
+        return array_key_exists(self::CONTEXT_KEY,$context) && in_array($context[ExecutorOrmExtension::OPERATION_CONTEXT_KEY],[ExecutorOrmExtension::OPERATION_GET_MANY,ExecutorOrmExtension::OPERATION_COUNT],true);
     }
 
     public function apply(string $collection, QueryBuilder $queryBuilder, array $context = [])

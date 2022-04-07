@@ -12,7 +12,7 @@ final class Filters
 
     private string $type;
     /**
-     * @var Filter[]
+     * @var Condition[]
      */
     private array $conditions=[];
 
@@ -55,7 +55,7 @@ final class Filters
                 $conditionGroup->addGroup(static::createFromArray($condition));
             }
             if (isset($condition['field'], $condition['operator'], $condition['value'])) {
-                $conditionGroup->addCondition(Filter::createFromArray($condition));
+                $conditionGroup->addCondition(Condition::createFromArray($condition));
             }
         }
         return $conditionGroup;
@@ -66,7 +66,7 @@ final class Filters
         $this->groups[] = $group;
     }
 
-    public function addCondition(Filter $condition): void
+    public function addCondition(Condition $condition): void
     {
         $this->conditions[] = $condition;
     }
@@ -84,6 +84,12 @@ final class Filters
     public function getConditions(): array
     {
         return $this->conditions;
+    }
+
+    public function removeCondition(Condition $condition):void
+    {
+        $key = array_search($condition,$this->conditions,true);
+        unset($this->conditions[$key]);
     }
 
     public function getGroups(): array

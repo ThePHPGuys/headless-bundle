@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tpg\HeadlessBundle\Extension;
 
 
-final class ExecutorOrmContextBuilder
+final class ExecutorOrmExtensionContextBuilder
 {
     use ExtensionContextBuilderTrait;
 
@@ -17,6 +17,7 @@ final class ExecutorOrmContextBuilder
                 ExecutorOrmExtension::OPERATION_COUNT,
                 ExecutorOrmExtension::OPERATION_GET_ONE,
                 ExecutorOrmExtension::OPERATION_GET_MANY,
+                ExecutorOrmExtension::OPERATION_GET_JOINED,
             ],
             true
         )){
@@ -38,5 +39,10 @@ final class ExecutorOrmContextBuilder
     public function withGetMany():self
     {
         return $this->withOperation(ExecutorOrmExtension::OPERATION_GET_MANY);
+    }
+
+    public function withGetJoined():self
+    {
+        return $this->withOperation(ExecutorOrmExtension::OPERATION_GET_JOINED);
     }
 }

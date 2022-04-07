@@ -5,7 +5,7 @@ namespace Tpg\HeadlessBundle\Extension\Filter;
 
 use InvalidArgumentException;
 
-final class Filter
+final class Condition
 {
     private const OPERATORS = [
         '=',

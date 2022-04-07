@@ -10,6 +10,7 @@ abstract class Pageable
     abstract public function getPageNumber():int;
     abstract public function getPageSize():int;
     abstract public function getSort():Sort;
+    abstract public function withSort(Sort $sort):self;
 
     public function isPaged():bool
     {

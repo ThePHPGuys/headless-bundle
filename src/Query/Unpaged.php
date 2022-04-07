@@ -27,4 +27,10 @@ final class Unpaged extends Pageable
         return Sort::unsorted();
     }
 
+    public function withSort(Sort $sort): Pageable
+    {
+        return clone $this;
+    }
+
+
 }

@@ -9,8 +9,10 @@ use Tpg\HeadlessBundle\Ast\Collection;
 use Tpg\HeadlessBundle\Ast\RelationToOne;
 use Tpg\HeadlessBundle\Ast\Walker\CollectionToORMQueryBuilder;
 use Tpg\HeadlessBundle\Exception\NotFoundException;
-use Tpg\HeadlessBundle\Extension\ExecutorOrmContextBuilder;
+use Tpg\HeadlessBundle\Extension\ExecutorOrmExtensionContextBuilder;
 use Tpg\HeadlessBundle\Extension\ExecutorOrmExtension;
+use Tpg\HeadlessBundle\Extension\ExecutorOrmHydrator;
+use Tpg\HeadlessBundle\Extension\ExecutorOrmHydratorContextBuilder;
 use Tpg\HeadlessBundle\Schema\Relation;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\EntityManagerInterface;
@@ -21,18 +23,22 @@ final class ExecutorORM
     private const HIDDEN_RELATED_FIELD = '__relId';
     private SchemaService $schemaService;
     private EntityManagerInterface $entityManager;
-    /** @var array<ExecutorOrmExtension> */
+    /** @var ExecutorOrmExtension[] */
     private iterable $extensions;
+    /** @var ExecutorOrmHydrator[] */
+    private iterable $hydrators;
 
 
     public function __construct(
         SchemaService $schemaService,
         EntityManagerInterface $entityManager,
-        iterable $extensions = []
+        iterable $extensions = [],
+        iterable $hydrators = []
     ) {
         $this->schemaService = $schemaService;
         $this->entityManager = $entityManager;
         $this->extensions = $extensions;
+        $this->hydrators = $hydrators;
     }
 
     public function getMany(Collection $collectionAst, array $context = []): array
@@ -45,7 +51,7 @@ final class ExecutorORM
             $builder,
             $collectionAst->collectionName,
             $walker->getDeferredRelations(),
-            (new ExecutorOrmContextBuilder())->withContext($context)->withGetMany()->toArray()
+            (new ExecutorOrmExtensionContextBuilder())->withContext($context)->withGetMany()->toArray()
         );
     }
 
@@ -67,7 +73,7 @@ final class ExecutorORM
         $this->applyExtensions(
             $collection,
             $queryBuilder,
-            (new ExecutorOrmContextBuilder())->withContext($context)->withCount()->toArray()
+            (new ExecutorOrmExtensionContextBuilder())->withContext($context)->withCount()->toArray()
         );
         return (int)$queryBuilder->getQuery()->getSingleScalarResult();
     }
@@ -81,7 +87,7 @@ final class ExecutorORM
             $builder,
             $collectionAst->collectionName,
             $walker->getDeferredRelations(),
-            (new ExecutorOrmContextBuilder())->withContext($context)->withGetOne()->toArray()
+            (new ExecutorOrmExtensionContextBuilder())->withContext($context)->withGetOne()->toArray()
         );
 
         if (count($result) === 0) {
@@ -126,6 +132,22 @@ final class ExecutorORM
         }
     }
 
+    private function applyHydrators(array $data, array $context):array
+    {
+        foreach ($this->hydrators as $hydrator) {
+            if (!$hydrator->supportsHydration($data, $context)) {
+                continue;
+            }
+            $data = $hydrator->hydrate($data,$context);
+        }
+        return $data;
+    }
+
+    private function applyHydratorsToData(array $data, array $context):array
+    {
+        return array_map(fn(array $row)=>$this->applyHydrators($row, $context),$data);
+    }
+
     /**
      * @param  QueryBuilder  $queryBuilder
      * @param  string  $parentCollection
@@ -136,10 +158,16 @@ final class ExecutorORM
         QueryBuilder $queryBuilder,
         string $parentCollection,
         array $deferredRelations,
-        array $context = []
+        array $context
     ): array {
         $this->applyExtensions($parentCollection, $queryBuilder, $context);
-        $data = $queryBuilder->getQuery()->getArrayResult();
+        $rawData = $queryBuilder->getQuery()->getArrayResult();
+
+        $data = $this->applyHydratorsToData(
+            $rawData,
+            (new ExecutorOrmHydratorContextBuilder())->withCollection($parentCollection)->toArray()
+        );
+
 
         $relationsKeys = array_map(fn(RelationToOne $relationToOne) => $relationToOne->fieldName, $deferredRelations);
 
@@ -154,7 +182,11 @@ final class ExecutorORM
         foreach ($relationsKeys as $relationsKey) {
             $relationIds[$relationsKey] = array_column($data, $relationsKey);
         }
-        $relationResolvers = $this->getRelationResolvers($parentCollection, $deferredRelations);
+        $relationResolvers = $this->getRelationResolvers(
+            $parentCollection,
+            $deferredRelations,
+            (new ExecutorOrmExtensionContextBuilder())->withGetJoined()->toArray()
+        );
 
         //Resolve relations
         foreach ($relationIds as $relation => $relationId) {
@@ -189,7 +221,7 @@ final class ExecutorORM
      * @param  array<RelationToOne>  $deferredRelations
      * @return array<string,callable(array)>
      */
-    private function getRelationResolvers(string $parentCollection, array $deferredRelations): array
+    private function getRelationResolvers(string $parentCollection, array $deferredRelations, array $context): array
     {
         $resolvers = [];
         foreach ($deferredRelations as $relation) {
@@ -200,20 +232,21 @@ final class ExecutorORM
 
             //TODO: Attach walker condition
             $builder = $walker->getBuilder();
-            $this->attachRelatedFields($builder, $relationMeta);
+            $this->addSelectRelatedFields($builder, $relationMeta);
 
             $resolvers[$relation->fieldName] = fn(array $ids) => $this->aggregateToOneField(
                 $this->executeAndJoinRelations(
                     $builder->setParameter('relId', $ids),
                     $relation->collectionName,
-                    $walker->getDeferredRelations()
+                    $walker->getDeferredRelations(),
+                    $context
                 )
             );
         }
         return $resolvers;
     }
 
-    private function attachRelatedFields(QueryBuilder $queryBuilder, Relation $relation): void
+    private function addSelectRelatedFields(QueryBuilder $queryBuilder, Relation $relation): void
     {
         $referencedField = sprintf('%s.%s', $relation->collection, $relation->referencedColumn);
         $queryBuilder

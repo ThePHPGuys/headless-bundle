@@ -34,7 +34,7 @@ final class PageableExtension implements ExecutorOrmExtension
         return array_key_exists(self::CONTEXT_KEY, $context) && $context[ExecutorOrmExtension::OPERATION_CONTEXT_KEY]===ExecutorOrmExtension::OPERATION_GET_MANY;
     }
 
-    public function apply(string $collection, QueryBuilder $queryBuilder, array $context = [])
+    public function apply(string $collection, QueryBuilder $queryBuilder, array &$context = [])
     {
         /** @var Pageable $pageable */
         $pageable = $context[self::CONTEXT_KEY];

@@ -4,7 +4,7 @@ use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigura
 use Symfony\Component\Serializer\Normalizer\ArrayDenormalizer;
 use Symfony\Component\Serializer\Normalizer\ObjectNormalizer;
 use Symfony\Component\Serializer\Serializer;
-use Tpg\HeadlessBundle\Extension\ExecutorOrmExtension;
+use Tpg\HeadlessBundle\DependencyInjection\TpgHeadlessExtension;
 use Tpg\HeadlessBundle\Extension\FiltersExtension;
 use Tpg\HeadlessBundle\Extension\PageableExtension;
 use Tpg\HeadlessBundle\Request\FieldsResolver;
@@ -40,9 +40,7 @@ return static function (ContainerConfigurator $container) {
     $services->set(PageableExtension::class);
     $services->set(FiltersExtension::class);
 
-    $services->set(ExecutorORM::class)
-        ->arg('$extensions', tagged_iterator(ExecutorOrmExtension::TAG));
-
+    $services->set(ExecutorORM::class);
 
     $services->set(SecurityService::class);
     $services->set(PageNormalizer::class);

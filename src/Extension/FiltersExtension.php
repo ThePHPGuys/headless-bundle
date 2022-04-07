@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Tpg\HeadlessBundle\Extension;
 
 
-use Tpg\HeadlessBundle\Extension\Filter\Filter;
+use Tpg\HeadlessBundle\Extension\Filter\Condition;
 use Tpg\HeadlessBundle\Extension\Filter\Filters;
 use Tpg\HeadlessBundle\Service\ExecutorORM;
 use Doctrine\Common\Collections\Criteria;
@@ -21,14 +21,29 @@ final class FiltersExtension implements ExecutorOrmExtension
 
     public function supports(string $collection, QueryBuilder $queryBuilder, array $context = []): bool
     {
-        return array_key_exists(self::CONTEXT_KEY,$context) && in_array($context[ExecutorOrmExtension::OPERATION_CONTEXT_KEY],[ExecutorOrmExtension::OPERATION_GET_MANY,ExecutorOrmExtension::OPERATION_COUNT],true);
+        if(!array_key_exists(self::CONTEXT_KEY,$context)){
+            return false;
+        }
+        if(!in_array($context[ExecutorOrmExtension::OPERATION_CONTEXT_KEY],[ExecutorOrmExtension::OPERATION_GET_MANY,ExecutorOrmExtension::OPERATION_COUNT],true)){
+            return false;
+        }
+        /** @var Filters $filters */
+        $filters = $context[self::CONTEXT_KEY];
+
+        if(!$filters->getConditions() && !$filters->getGroups()){
+            return false;
+        }
+
+        return true;
     }
 
-    public function apply(string $collection, QueryBuilder $queryBuilder, array $context = [])
+    public function apply(string $collection, QueryBuilder $queryBuilder, array &$context = [])
     {
         /** @var Filters $filters */
         $filters = $context[self::CONTEXT_KEY];
+
         $criteria = $this->resolveFilters($filters);
+
         $queryBuilder->addCriteria(Criteria::create()->where($criteria));
     }
 
@@ -46,7 +61,7 @@ final class FiltersExtension implements ExecutorOrmExtension
         return $filters->isAnd() ? Criteria::expr()->andX(...$expressions) : Criteria::expr()->orX(...$expressions);
     }
 
-    private function resolveCondition(Filter $condition): Comparison
+    private function resolveCondition(Condition $condition): Comparison
     {
         $property = $condition->property();
         $value = $condition->value();

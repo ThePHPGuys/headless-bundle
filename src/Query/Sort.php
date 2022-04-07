@@ -11,7 +11,7 @@ use Tpg\HeadlessBundle\Query\Sort\Order;
 final class Sort implements \IteratorAggregate
 {
     /**
-     * @var array<Order>
+     * @var Order[]
      */
     private array $orders=[];
 
@@ -35,6 +35,12 @@ final class Sort implements \IteratorAggregate
         $order = array_filter($this->orders,static fn(Order $o)=>$o->property()===$property);
 
         return isset($order[0]);
+    }
+
+    public function removeOrder(Order $order):void
+    {
+        $key = array_search($order,$this->orders);
+        unset($order[$key]);
     }
 
     public function isSorted():bool

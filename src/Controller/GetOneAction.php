@@ -8,7 +8,7 @@ namespace Tpg\HeadlessBundle\Controller;
 use Tpg\HeadlessBundle\Query\Fields;
 use Tpg\HeadlessBundle\Query\Pageable;
 use Tpg\HeadlessBundle\Service\AstFactory;
-use Tpg\HeadlessBundle\Service\ExecutorORM;
+use Tpg\HeadlessBundle\Service\ReadExecutor;
 use Tpg\HeadlessBundle\Service\ItemsService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;

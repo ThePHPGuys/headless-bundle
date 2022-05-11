@@ -24,6 +24,6 @@ interface Schema
     /**
      * @return string[]
      */
-    public function getRelationFields(string $collection):array;
+    public function getRelationFields(string $collection, int $type=null):array;
     public function getRelation(string $collection,string $relation):Relation;
 }

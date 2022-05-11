@@ -2,51 +2,22 @@
 
 declare(strict_types=1);
 
-namespace Tpg\HeadlessBundle\Extension;
+namespace Tpg\HeadlessBundle\Middleware;
 
 
-use Tpg\HeadlessBundle\Extension\Filter\Condition;
-use Tpg\HeadlessBundle\Extension\Filter\Filters;
-use Tpg\HeadlessBundle\Service\ExecutorORM;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\Common\Collections\Expr\Comparison;
 use Doctrine\Common\Collections\Expr\Expression;
 use Doctrine\Common\Collections\ExpressionBuilder;
-use Doctrine\ORM\QueryBuilder;
-use Exception;
+use Tpg\HeadlessBundle\Filter\Condition;
+use Tpg\HeadlessBundle\Filter\Filters;
 
-final class FiltersExtension implements ExecutorOrmExtension
+final class FiltersCriteriaBuilder
 {
-    public const CONTEXT_KEY = self::class;
-
-    public function supports(string $collection, QueryBuilder $queryBuilder, array $context = []): bool
+    public function __invoke(Filters $filters):Criteria
     {
-        if(!array_key_exists(self::CONTEXT_KEY,$context)){
-            return false;
-        }
-        if(!in_array($context[ExecutorOrmExtension::OPERATION_CONTEXT_KEY],[ExecutorOrmExtension::OPERATION_GET_MANY,ExecutorOrmExtension::OPERATION_COUNT],true)){
-            return false;
-        }
-        /** @var Filters $filters */
-        $filters = $context[self::CONTEXT_KEY];
-
-        if(!$filters->getConditions() && !$filters->getGroups()){
-            return false;
-        }
-
-        return true;
+        return Criteria::create()->where($this->resolveFilters($filters));
     }
-
-    public function apply(string $collection, QueryBuilder $queryBuilder, array &$context = [])
-    {
-        /** @var Filters $filters */
-        $filters = $context[self::CONTEXT_KEY];
-
-        $criteria = $this->resolveFilters($filters);
-
-        $queryBuilder->addCriteria(Criteria::create()->where($criteria));
-    }
-
     private function resolveFilters(Filters $filters): Expression
     {
         $expressions = [];
@@ -98,7 +69,7 @@ final class FiltersExtension implements ExecutorOrmExtension
             case 'null':
                 return $expr->isNull($property);
             default:
-                throw new Exception(sprintf('Unimplemented %s operator', $condition->operator()));
+                throw new \Exception(sprintf('Unimplemented %s operator', $condition->operator()));
         }
     }
 }

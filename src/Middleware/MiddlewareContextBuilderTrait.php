@@ -1,8 +1,8 @@
 <?php
 
-namespace Tpg\HeadlessBundle\Extension;
+namespace Tpg\HeadlessBundle\Middleware;
 
-trait ExtensionContextBuilderTrait
+trait MiddlewareContextBuilderTrait
 {
     /** @var array<string,mixed>  */
     protected array $context = [];
@@ -18,6 +18,13 @@ trait ExtensionContextBuilderTrait
     {
         $instance = new static();
         $instance->context = array_merge($this->context,$context);
+        return $instance;
+    }
+
+    public static function create(array $context=[]):self
+    {
+        $instance = new static();
+        $instance->context = $context;
         return $instance;
     }
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace Tpg\HeadlessBundle\Extension\Filter;
+namespace Tpg\HeadlessBundle\Filter;
 
 
 use InvalidArgumentException;

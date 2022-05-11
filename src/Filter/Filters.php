@@ -1,6 +1,6 @@
 <?php
 
-namespace Tpg\HeadlessBundle\Extension\Filter;
+namespace Tpg\HeadlessBundle\Filter;
 
 
 use InvalidArgumentException;
@@ -32,6 +32,7 @@ final class Filters
     /**
      * @param array $group
      * @return static
+     * [{"field":"propertyName","operator":"=","value":"propertyValue"}]
      * [{type: "AND", conditions:}]
      */
     public static function createFromArray(array $group): self

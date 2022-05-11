@@ -6,11 +6,9 @@ namespace Tpg\HeadlessBundle\Service;
 
 
 use Symfony\Component\Validator\Constraint;
-use Tpg\HeadlessBundle\Ast\Collection;
 use Tpg\HeadlessBundle\Exception\NotFoundException;
 use Tpg\HeadlessBundle\Exception\ValidationException;
-use Tpg\HeadlessBundle\Extension\PageableContextBuilder;
-use Tpg\HeadlessBundle\Extension\PageableExtension;
+use Tpg\HeadlessBundle\Middleware\PageableContextBuilder;
 use Tpg\HeadlessBundle\Query\Fields;
 use Tpg\HeadlessBundle\Query\Page;
 use Tpg\HeadlessBundle\Query\Pageable;
@@ -23,7 +21,7 @@ use Symfony\Component\Validator\Validator\ValidatorInterface;
 final class ItemsService
 {
     private SecuredAstFactory $astFactory;
-    private ExecutorORM $astExecutorORM;
+    private ReadExecutor $astExecutorORM;
     private DataHydrator $dataExtractor;
     private ValidatorInterface $validator;
     private EntityManagerInterface $entityManager;
@@ -33,7 +31,7 @@ final class ItemsService
     private const UPDATE_VALIDATION_GROUP = 'headless:update';
 
     public function __construct(
-        SecuredAstFactory $astFactory, ExecutorORM $astExecutorORM, DataHydrator $dataExtractor,
+        SecuredAstFactory $astFactory, ReadExecutor $astExecutorORM, DataHydrator $dataExtractor,
         ValidatorInterface $validator, EntityManagerInterface $entityManager, SecurityService $securityService,
         SchemaService $schemaService
     )
@@ -49,7 +47,7 @@ final class ItemsService
 
     public function getMany(string $collection, Fields $fields, array $context=[]):array
     {
-        return $this->astExecutorORM->getMany(
+        return $this->astExecutorORM->many(
             $this->astFactory->createCollectionAstFromFields($collection,$fields,AccessOperation::READ),
             $context
         );
@@ -57,7 +55,7 @@ final class ItemsService
 
     public function getOne(string $collection, string $id, Fields $fields, array $context=[]):array
     {
-        return $this->astExecutorORM->getOne(
+        return $this->astExecutorORM->one(
             $this->astFactory->createCollectionAstFromFields($collection,$fields,AccessOperation::READ),
             $id,
             $context
@@ -66,9 +64,15 @@ final class ItemsService
 
     public function getPage(string $collection, Fields $fields, Pageable $pageable,array $context=[]):Page
     {
-        $context = (new PageableContextBuilder())->withContext($context)->withPageable($pageable)->toArray();
+        $context = PageableContextBuilder::create($context)->withPageable($pageable)->toArray();
+
         $result = $this->getMany($collection,$fields,$context);
-        $count = $this->astExecutorORM->getCount($collection,$context);
+
+        $count = $this->astExecutorORM->count(
+            $this->astFactory->createCollectionAstFromFields($collection,$fields,AccessOperation::READ),
+            $context
+        );
+
         return new Page(
             $result,
             $pageable,

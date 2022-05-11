@@ -41,14 +41,14 @@ final class ItemDenormalizer implements ContextAwareDenormalizerInterface, Denor
             unset($context['collection']);
             return $this->denormalizer->denormalize($data,$type,$format,$context);
         }
-        $relatedCollectionClass = $this->schemaService->getCollection($relation->collection)->class;
+        $relatedCollectionClass = $this->schemaService->getCollection($relation->relatedCollection)->class;
 
         return $this->entityManager->getReference($relatedCollectionClass,$this->getId($relation, $data));
     }
 
     private function getId(Relation $relation, $value)
     {
-        $referencedField = $this->schemaService->getField($relation->collection,$relation->referencedColumn);
+        $referencedField = $this->schemaService->getField($relation->relatedCollection,$relation->referencedColumn);
         return $this->entityManager->getConnection()->convertToPHPValue($value,$referencedField->type);
     }
 

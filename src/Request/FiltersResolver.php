@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Tpg\HeadlessBundle\Request;
 
 
-use Tpg\HeadlessBundle\Extension\Filter\Filters;
 use InvalidArgumentException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Controller\ArgumentValueResolverInterface;
 use Symfony\Component\HttpKernel\ControllerMetadata\ArgumentMetadata;
+use Tpg\HeadlessBundle\Filter\Filters;
 
 final class FiltersResolver implements ArgumentValueResolverInterface
 {

@@ -2,17 +2,19 @@
 
 declare(strict_types=1);
 
-namespace Tpg\HeadlessBundle\Extension;
+namespace Tpg\HeadlessBundle\Middleware;
 
 
 use Tpg\HeadlessBundle\Query\Pageable;
 
 final class PageableContextBuilder
 {
-    use ExtensionContextBuilderTrait;
+    use MiddlewareContextBuilderTrait;
+
+    public const PAGEABLE = 'pageable';
 
     public function withPageable(Pageable $pageable): self
     {
-        return $this->with(PageableExtension::CONTEXT_KEY,$pageable);
+        return $this->with(self::PAGEABLE,$pageable);
     }
 }

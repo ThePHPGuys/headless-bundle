@@ -42,7 +42,7 @@ final class SecurityService
 
             if(is_array($value) && in_array($field,$relations,true)){
                 $relation = $this->schemaService->getRelation($collection,$field);
-                $data[$field] = $this->filterEntityData($relation->collection,$value,$operation);
+                $data[$field] = $this->filterEntityData($relation->relatedCollection,$value,$operation);
             }
         }
         return $data;

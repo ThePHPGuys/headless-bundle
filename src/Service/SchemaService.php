@@ -5,6 +5,9 @@ declare(strict_types=1);
 namespace Tpg\HeadlessBundle\Service;
 
 
+use Doctrine\ORM\Mapping\ClassMetadataFactory;
+use Symfony\Component\Validator\Mapping\Factory\MetadataFactoryInterface;
+use Tpg\HeadlessBundle\Exception\CollectionNotFound;
 use Tpg\HeadlessBundle\Exception\CompositeKeysAreNotSupported;
 use Tpg\HeadlessBundle\Schema\Collection;
 use Tpg\HeadlessBundle\Schema\Field;
@@ -15,7 +18,7 @@ use Doctrine\ORM\Mapping\ClassMetadataInfo;
 
 final class SchemaService implements Schema
 {
-    private EntityManagerInterface $entityManager;
+    private ClassMetadataFactory $metadata;
     /**
      * @var array<string, class-string>
      */
@@ -23,7 +26,7 @@ final class SchemaService implements Schema
 
     public function __construct(EntityManagerInterface $entityManager)
     {
-        $this->entityManager = $entityManager;
+        $this->metadata = $entityManager->getMetadataFactory();
     }
 
     /**
@@ -67,15 +70,13 @@ final class SchemaService implements Schema
 
     private function getCollectionMetadata(string $collection):ClassMetadataInfo
     {
-        return $this->entityManager->getClassMetadata($this->collections[$collection]);
+        if(!isset($this->collections[$collection])){
+            throw new CollectionNotFound(sprintf("Collection '%s' not found",$collection));
+        }
+
+        return $this->metadata->getMetadataFor($this->collections[$collection]);
     }
 
-    private function getEmbeddedMetadata(string $class):ClassMetadataInfo
-    {
-        $classMd = $this->entityManager->getClassMetadata($class);
-        assert($classMd->isEmbeddedClass);
-        return $classMd;
-    }
 
     public function hasCollection(string $collection):bool
     {
@@ -87,9 +88,14 @@ final class SchemaService implements Schema
         return [...$this->getNonRelationFields($collection),...$this->getRelationFields($collection)];
     }
 
-    public function getRelationFields(string $collection):array
+    public function getRelationFields(string $collection, int $type=null):array
     {
-        return $this->getCollectionMetadata($collection)->getAssociationNames();
+        $mappings = $this->getCollectionMetadata($collection)->associationMappings;
+        if($type!==null){
+            $mappings = array_filter($mappings,fn(array $mapping)=>$mapping['type']&$type);
+        }
+        return array_keys($mappings);
+
     }
 
     public function getNonRelationFields(string $collection):array
@@ -111,7 +117,14 @@ final class SchemaService implements Schema
         }
 
         $referencedCollection = $this->getCollectionByClass($associationMapping['targetEntity']);
-        $rel = new Relation($associationMapping['fieldName'], $associationMapping['type'],$referencedCollection);
+//        $associationMapping = $this->getCollectionMetadata($collection)->getAssociationMapping('tags');
+//        dump($associationMapping);
+//        $associationMapping = $this->getCollectionMetadata($collection)->getAssociationMapping('owner');
+//        dump($associationMapping);
+//        $associationMapping = $this->getCollectionMetadata('owner')->getAssociationMapping('pets');
+//        dump($associationMapping);
+//        dd();
+        $rel = new Relation($collection,$associationMapping['fieldName'], $associationMapping['type'],$referencedCollection);
 
         if($rel->isToOne()) {
             if (count($associationMapping['joinColumns']) > 1) {
@@ -123,12 +136,13 @@ final class SchemaService implements Schema
         }else{
             //Get mapping from owning collection and swap
             $referencedCollectionMetadata= $this->getCollectionMetadata($referencedCollection);
-            $owningSideMetadata = $referencedCollectionMetadata->getAssociationMapping($associationMapping['mappedBy']);
-            if (count($owningSideMetadata['joinColumns']) > 1) {
-                throw new CompositeKeysAreNotSupported();
-            }
-            $rel->joinColumn = $owningSideMetadata['joinColumns'][0]['referencedColumnName'];
-            $rel->referencedColumn = $owningSideMetadata['joinColumns'][0]['name'];
+
+//            $owningSideMetadata = $referencedCollectionMetadata->getAssociationMapping($associationMapping['mappedBy']);
+//            if (count($owningSideMetadata['joinColumns']) > 1) {
+//                throw new CompositeKeysAreNotSupported();
+//            }
+//            $rel->joinColumn = $owningSideMetadata['joinColumns'][0]['referencedColumnName'];
+//            $rel->referencedColumn = $owningSideMetadata['joinColumns'][0]['name'];
         }
         return $rel;
     }
@@ -136,7 +150,6 @@ final class SchemaService implements Schema
     public function getCollection(string $collection):Collection
     {
         $associationMapping = $this->getCollectionMetadata($collection);
-
         return new Collection($associationMapping->table['name'], $this->getClass($collection));
     }
 

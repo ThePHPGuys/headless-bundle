@@ -45,14 +45,16 @@ final class Relation
     private int $type;
     public string $name;
     public string $collection;
+    public string $relatedCollection;
     public string $joinColumn;
     public string $referencedColumn;
 
-    public function __construct(string $name, int $cardinality, string $collection, int $type=self::ASSOCIATION)
+    public function __construct(string $collection, string $name, int $cardinality, string $relatedCollection, int $type=self::ASSOCIATION)
     {
         $this->name = $name;
-        $this->cardinality = $cardinality;
         $this->collection = $collection;
+        $this->cardinality = $cardinality;
+        $this->relatedCollection = $relatedCollection;
         $this->type = $type;
     }
 

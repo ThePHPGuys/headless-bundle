@@ -5,15 +5,14 @@ declare(strict_types=1);
 namespace Tpg\HeadlessBundle\Controller;
 
 
-use Tpg\HeadlessBundle\Extension\Filter\Filters;
-use Tpg\HeadlessBundle\Extension\FiltersContextBuilder;
-use Tpg\HeadlessBundle\Extension\FiltersExtension;
-use Tpg\HeadlessBundle\Query\Fields;
-use Tpg\HeadlessBundle\Query\Pageable;
-use Tpg\HeadlessBundle\Service\ItemsService;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+use Tpg\HeadlessBundle\Filter\Filters;
+use Tpg\HeadlessBundle\Middleware\FiltersContextBuilder;
+use Tpg\HeadlessBundle\Query\Fields;
+use Tpg\HeadlessBundle\Query\Pageable;
+use Tpg\HeadlessBundle\Service\ItemsService;
 
 final class GetManyAction
 {
@@ -30,7 +29,7 @@ final class GetManyAction
     {
         $context = [];
         if($filters!==null) {
-            $context = (new FiltersContextBuilder())->withContext($context)->withFilters($filters)->toArray();
+            $context = FiltersContextBuilder::create($context)->withFilters($filters)->toArray();
         }
         $page = $this->itemsService->getPage($collection,$fields,$pageable,$context);
         return new JsonResponse($this->normalizer->normalize($page,'json'));

@@ -16,8 +16,8 @@ final class Field extends Node
         return  $s;
     }
 
-    public function accept(AstWalker $walker):void
+    public function accept(AstWalker $walker)
     {
-        $walker->visitField($this);
+        return $walker->visitField($this);
     }
 }

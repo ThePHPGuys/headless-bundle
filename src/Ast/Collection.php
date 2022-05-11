@@ -7,18 +7,18 @@ namespace Tpg\HeadlessBundle\Ast;
 
 final class Collection extends Node
 {
-    public string $collectionName;
+    public string $name;
 
-    public static function create(string $collectionName):self
+    public static function create(string $name):self
     {
         $s = new self();
-        $s->collectionName = $collectionName;
+        $s->name = $name;
         return $s;
     }
 
-    public function accept(AstWalker $walker):void
+    public function accept(AstWalker $walker)
     {
-        $walker->visitCollection($this);
+        return $walker->visitCollection($this);
     }
 
 

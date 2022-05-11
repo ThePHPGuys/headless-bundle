@@ -9,6 +9,8 @@ use Tpg\HeadlessBundle\Ast\AstWalker;
 use Tpg\HeadlessBundle\Ast\Collection;
 use Tpg\HeadlessBundle\Ast\Field;
 use Tpg\HeadlessBundle\Ast\Node;
+use Tpg\HeadlessBundle\Ast\Relation;
+use Tpg\HeadlessBundle\Ast\RelationToMany;
 use Tpg\HeadlessBundle\Ast\RelationToOne;
 use Tpg\HeadlessBundle\Security\Checker;
 use Tpg\HeadlessBundle\Security\Subject\Collection as CollectionSubject;
@@ -31,9 +33,9 @@ final class SecurityWalker implements AstWalker
         return $node instanceof Field;
     }
 
-    private function isRelationToOne(Node $node):bool
+    private function isRelation(Node $node):bool
     {
-        return $node instanceof RelationToOne;
+        return $node instanceof Relation;
     }
 
     private function isFieldGranted(string $collection, string $field):bool
@@ -67,10 +69,11 @@ final class SecurityWalker implements AstWalker
             }
 
             /** @var RelationToOne $child */
-            if($this->isRelationToOne($child) && $this->isFieldGranted($collectionName, $child->fieldName)){
+            if($this->isRelation($child) && $this->isFieldGranted($collectionName, $child->fieldName)){
                 $child->accept($this);
                 continue;
             }
+
             //Remove field
             array_splice($children,$cId,1);
 
@@ -80,7 +83,7 @@ final class SecurityWalker implements AstWalker
 
     public function visitCollection(Collection $collection):void
     {
-        $collection->children = $this->walkChildren($collection->collectionName,$collection->children);
+        $collection->children = $this->walkChildren($collection->name,$collection->children);
     }
 
     public function visitField(Field $field):void
@@ -90,8 +93,14 @@ final class SecurityWalker implements AstWalker
 
     public function visitRelationToOne(RelationToOne $relation):void
     {
-        $relation->children = $this->walkChildren($relation->collectionName,$relation->children);
+        $relation->children = $this->walkChildren($relation->relatedCollection,$relation->children);
     }
+
+    public function visitRelationToMany(RelationToMany $relation):void
+    {
+        $relation->children = $this->walkChildren($relation->relatedCollection,$relation->children);
+    }
+
 
     public function getEffective(Collection $collection):Collection
     {

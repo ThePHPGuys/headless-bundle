@@ -7,6 +7,12 @@ use Symfony\Component\Serializer\Serializer;
 use Tpg\HeadlessBundle\DependencyInjection\TpgHeadlessExtension;
 use Tpg\HeadlessBundle\Extension\FiltersExtension;
 use Tpg\HeadlessBundle\Extension\PageableExtension;
+use Tpg\HeadlessBundle\Middleware\AttachReferencesToResultMiddleware;
+use Tpg\HeadlessBundle\Middleware\FiltersMiddleware;
+use Tpg\HeadlessBundle\Middleware\HydratorMiddleware;
+use Tpg\HeadlessBundle\Middleware\PageableMiddleware;
+use Tpg\HeadlessBundle\Middleware\QueryMiddlewareStack;
+use Tpg\HeadlessBundle\Middleware\StripToManyRelationsOnListMiddleware;
 use Tpg\HeadlessBundle\Request\FieldsResolver;
 use Tpg\HeadlessBundle\Request\FiltersResolver;
 use Tpg\HeadlessBundle\Request\ModifyItemRequestResolver;
@@ -18,8 +24,11 @@ use Tpg\HeadlessBundle\Serializer\PageNormalizer;
 use Tpg\HeadlessBundle\Serializer\ValidationExceptionNormalizer;
 use Tpg\HeadlessBundle\Service\AstFactory;
 use Tpg\HeadlessBundle\Service\DataHydrator;
-use Tpg\HeadlessBundle\Service\ExecutorORM;
+use Tpg\HeadlessBundle\Service\ReadExecutor;
+use Tpg\HeadlessBundle\Service\HydratorORM;
 use Tpg\HeadlessBundle\Service\ItemsService;
+use Tpg\HeadlessBundle\Service\QueryService;
+use Tpg\HeadlessBundle\Service\ResourceHydratorFactory;
 use Tpg\HeadlessBundle\Service\SchemaService;
 use Tpg\HeadlessBundle\Service\SecuredAstFactory;
 use Tpg\HeadlessBundle\Service\SecurityChecker;
@@ -37,10 +46,19 @@ return static function (ContainerConfigurator $container) {
     $services->set(AstFactory::class);
     $services->set(Checker::class,SecurityChecker::class);
 
-    $services->set(PageableExtension::class);
-    $services->set(FiltersExtension::class);
+    $services->set(QueryMiddlewareStack::class)->autoconfigure(false);
 
-    $services->set(ExecutorORM::class);
+    $services->set(FiltersMiddleware::class);
+    $services->set(PageableMiddleware::class);
+    $services->set(AttachReferencesToResultMiddleware::class)
+        ->tag(TpgHeadlessExtension::QUERY_MIDDLEWARE_TAG,['priority'=>-2000]);
+    $services->set(HydratorMiddleware::class)
+        ->tag(TpgHeadlessExtension::QUERY_MIDDLEWARE_TAG,['priority'=>-1000]);
+
+    $services->set(QueryService::class);
+    $services->set(HydratorORM::class);
+    $services->set(ReadExecutor::class);
+    $services->set(ResourceHydratorFactory::class);
 
     $services->set(SecurityService::class);
     $services->set(PageNormalizer::class);

@@ -10,18 +10,17 @@ use Symfony\Component\DependencyInjection\Extension\Extension;
 use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
 use Tpg\HeadlessBundle\Extension\ExecutorOrmExtension;
 use Tpg\HeadlessBundle\Extension\ExecutorOrmHydrator;
+use Tpg\HeadlessBundle\Middleware\Middleware;
 use Tpg\HeadlessBundle\Service\SchemaService;
 
 final class TpgHeadlessExtension extends Extension
 {
-    public const EXTENSION_TAG = 'headless.executor.orm.extension';
-    public const HYDRATOR_TAG = 'headless.executor.orm.hydrator';
+    public const QUERY_MIDDLEWARE_TAG = 'headless.query.middleware';
+
     public function load(array $configs, ContainerBuilder $container)
     {
-        $container->registerForAutoconfiguration(ExecutorOrmExtension::class)
-            ->addTag(self::EXTENSION_TAG);
-        $container->registerForAutoconfiguration(ExecutorOrmHydrator::class)
-            ->addTag(self::HYDRATOR_TAG);
+        $container->registerForAutoconfiguration(Middleware::class)
+            ->addTag(self::QUERY_MIDDLEWARE_TAG);
 
         $loader = new PhpFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.php');

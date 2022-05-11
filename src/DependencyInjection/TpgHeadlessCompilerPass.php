@@ -8,7 +8,8 @@ namespace Tpg\HeadlessBundle\DependencyInjection;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\Compiler\PriorityTaggedServiceTrait;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
-use Tpg\HeadlessBundle\Service\ExecutorORM;
+use Tpg\HeadlessBundle\Middleware\QueryMiddlewareStack;
+use Tpg\HeadlessBundle\Service\ReadExecutor;
 
 final class TpgHeadlessCompilerPass implements CompilerPassInterface
 {
@@ -16,13 +17,10 @@ final class TpgHeadlessCompilerPass implements CompilerPassInterface
 
     public function process(ContainerBuilder $container)
     {
-        $extensions = $this->findAndSortTaggedServices(TpgHeadlessExtension::EXTENSION_TAG,$container);
-        $hydrators = $this->findAndSortTaggedServices(TpgHeadlessExtension::HYDRATOR_TAG,$container);
+        $middlewares = $this->findAndSortTaggedServices(TpgHeadlessExtension::QUERY_MIDDLEWARE_TAG,$container);
+        $middlewaresDefinition = $container->getDefinition(QueryMiddlewareStack::class);
+        $middlewaresDefinition->addMethodCall('pipes',[$middlewares]);
 
-        $executorDefinition = $container->getDefinition(ExecutorORM::class);
-
-        $executorDefinition->setArgument('$extensions',$extensions);
-        $executorDefinition->setArgument('$hydrators',$hydrators);
     }
 
 }

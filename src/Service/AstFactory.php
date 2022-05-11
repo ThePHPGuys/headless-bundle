@@ -6,8 +6,10 @@ namespace Tpg\HeadlessBundle\Service;
 use Tpg\HeadlessBundle\Ast\Collection;
 use Tpg\HeadlessBundle\Ast\Embedded;
 use Tpg\HeadlessBundle\Ast\Field;
+use Tpg\HeadlessBundle\Ast\RelationToMany;
 use Tpg\HeadlessBundle\Ast\RelationToOne;
 use Tpg\HeadlessBundle\Query\Fields;
+use Tpg\HeadlessBundle\Schema\Relation;
 use function str_starts_with;
 
 class AstFactory
@@ -65,10 +67,12 @@ class AstFactory
             if($this->schemaService->hasRelation($collection,$fieldKey)) {
                 $relation = $this->schemaService->getRelation($collection, $fieldKey);
                 if ($relation->isToOne()) {
-                    $child = RelationToOne::create($fieldKey, $relation->collection);
-                    $child->children = $this->parseFields($relation->collection, $nestedFields);
-                    $children[] = $child;
+                    $child = RelationToOne::create($relation->collection, $fieldKey, $relation->relatedCollection);
+                }else{
+                    $child = RelationToMany::create($relation->collection, $fieldKey, $relation->relatedCollection);
                 }
+                $child->children = $this->parseFields($relation->relatedCollection, $nestedFields);
+                $children[] = $child;
             }
         }
         return $children;
@@ -76,10 +80,16 @@ class AstFactory
 
     private function convertWildcards(string $collection, array $fields, array $allowedFields = ['*']): array
     {
-        if(!$this->schemaService->hasCollection($collection)){
+        $schema = $this->schemaService;
+
+        if(!$schema->hasCollection($collection)){
             return [];
         }
-        $fieldsInCollection = $this->schemaService->getFields($collection);
+
+        $fieldsInCollection = [
+            ...$schema->getNonRelationFields($collection),
+            ...$schema->getRelationFields($collection,Relation::TO_ONE)
+        ];
 
         if (!$fields || !$allowedFields) {
             return [];
@@ -104,7 +114,7 @@ class AstFactory
                 $parts = explode('.', $fieldKey);
 
                 $relationFields = array_filter(
-                    $this->schemaService->getRelationFields($collection),
+                    $this->schemaService->getRelationFields($collection,Relation::TO_ONE),
                     static fn($field) => in_array($field, $allowedFields, true)
                 );
                 $nonRelationalFields = array_filter(

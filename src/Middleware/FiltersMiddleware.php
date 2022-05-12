@@ -7,8 +7,13 @@ namespace Tpg\HeadlessBundle\Middleware;
 use Doctrine\ORM\QueryBuilder;
 use Tpg\HeadlessBundle\Filter\Filters;
 
-final class FiltersMiddleware implements Middleware
+final class FiltersMiddleware implements Middleware, RestrictQueryTypeMiddleware
 {
+    public function restrictedToQueryTypes(): array
+    {
+        return [MiddlewareContextBuilder::MANY, MiddlewareContextBuilder::COUNT];
+    }
+
     public function process(QueryBuilder $queryBuilder, array $context, Stack $stack): array
     {
         if($this->isValid($context)){
@@ -20,26 +25,14 @@ final class FiltersMiddleware implements Middleware
 
     private function isValid(array $context):bool
     {
-        if(!isset($context[MiddlewareContextBuilder::QUERY_TYPE],$context[FiltersContextBuilder::FILTERS])){
+        if(!isset($context[FiltersContextBuilder::FILTERS])){
             return false;
         }
-        if(!in_array(
-            $context[MiddlewareContextBuilder::QUERY_TYPE],
-            [
-                MiddlewareContextBuilder::MANY,
-                MiddlewareContextBuilder::COUNT
-            ],true)
-        ){
-            return false;
-        }
+
         /** @var Filters $filters */
         $filters = $context[FiltersContextBuilder::FILTERS];
 
-        if(!$filters->getConditions() && !$filters->getGroups()){
-            return false;
-        }
-
-        return true;
+        return $filters->getConditions() || !$filters->getGroups();
     }
 
 }

@@ -25,7 +25,34 @@ final class StackExecutor implements Stack
         if($this->queue->isEmpty()){
             return $this->default?($this->default)($queryBuilder,$context):[];
         }
-        return $this->queue->dequeue()->process($queryBuilder, $context,$this);
+        return $this->processMiddleware($this->queue->dequeue(),$queryBuilder, $context);
     }
 
+    private function processMiddleware(Middleware $middleware, QueryBuilder $queryBuilder, array $context):array
+    {
+        if($middleware instanceof CollectionAwareMiddleware){
+            if(!isset($context[MiddlewareContextBuilder::COLLECTION])){
+                return $this->handle($queryBuilder,$context);
+            }
+            $middleware->setCollection($context[MiddlewareContextBuilder::COLLECTION]);
+        }
+
+        if($middleware instanceof QueryTypeAwareMiddleware) {
+            if(!isset($context[MiddlewareContextBuilder::QUERY_TYPE])){
+                return $this->handle($queryBuilder,$context);
+            }
+            $middleware->setQueryType($context[MiddlewareContextBuilder::QUERY_TYPE]);
+        }
+
+        if($middleware instanceof RestrictQueryTypeMiddleware){
+            if(
+                !isset($context[MiddlewareContextBuilder::QUERY_TYPE])
+                || !in_array($context[MiddlewareContextBuilder::QUERY_TYPE],$middleware->restrictedToQueryTypes(),true)
+            ) {
+                return $this->handle($queryBuilder, $context);
+            }
+        }
+
+        return $middleware->process($queryBuilder, $context,$this);
+    }
 }

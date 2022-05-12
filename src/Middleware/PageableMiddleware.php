@@ -12,11 +12,12 @@ use Tpg\HeadlessBundle\Query\Pageable;
 use Tpg\HeadlessBundle\Query\Sort;
 use Tpg\HeadlessBundle\Query\Sort\Order;
 use Tpg\HeadlessBundle\Security\Subject\AccessOperation;
-use Tpg\HeadlessBundle\Service\AstFactory;
 use Tpg\HeadlessBundle\Service\SecuredAstFactory;
 
-final class PageableMiddleware implements Middleware
+final class PageableMiddleware implements Middleware, CollectionAwareMiddleware, RestrictQueryTypeMiddleware
 {
+    use CollectionAwareMiddlewareTrait;
+
     private int $maxPageSize;
     private SecuredAstFactory $securedAstFactory;
 
@@ -34,8 +35,8 @@ final class PageableMiddleware implements Middleware
 
         /** @var Pageable $pageable */
         $pageable = $context[PageableContextBuilder::PAGEABLE];
-        /** @var Collection $collection */
-        $collection = $context[MiddlewareContextBuilder::COLLECTION];
+
+        $collection = $this->getCollection();
 
         $this->addPagination($queryBuilder,$pageable->getPageSize(),$pageable->getPageNumber());
         $this->addSorting($collection->name, $queryBuilder, $pageable->getSortOr(Sort::unsorted()));
@@ -72,11 +73,13 @@ final class PageableMiddleware implements Middleware
 
     private function isPageable(array $context):bool
     {
-        return isset(
-                $context[PageableContextBuilder::PAGEABLE],
-                $context[MiddlewareContextBuilder::COLLECTION],
-                $context[MiddlewareContextBuilder::QUERY_TYPE]
-            )
-            && $context[MiddlewareContextBuilder::QUERY_TYPE] === MiddlewareContextBuilder::MANY;
+        return isset($context[PageableContextBuilder::PAGEABLE]);
     }
+
+    public function restrictedToQueryTypes(): array
+    {
+        return [MiddlewareContextBuilder::MANY];
+    }
+
+
 }

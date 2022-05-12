@@ -11,8 +11,10 @@ use Tpg\HeadlessBundle\Ast\Relation;
 use Tpg\HeadlessBundle\Ast\Walker\RelationExtractor;
 use Tpg\HeadlessBundle\Reference\CollectionResourceReference;
 
-final class AttachReferencesToResultMiddleware implements Middleware
+final class AttachReferencesToResultMiddleware implements Middleware, CollectionAwareMiddleware
 {
+    use CollectionAwareMiddlewareTrait;
+
     /**
      * @param  QueryBuilder  $queryBuilder
      * @param  array  $context
@@ -21,14 +23,12 @@ final class AttachReferencesToResultMiddleware implements Middleware
      */
     public function process(QueryBuilder $queryBuilder, array $context, Stack $stack): array
     {
-        $result = $stack->handle($queryBuilder,$context);
-        if(!isset($context[MiddlewareContextBuilder::COLLECTION])){
-            return $result;
-        }
-        /** @var Collection $collection */
-        $collection = $context[MiddlewareContextBuilder::COLLECTION];
-        $relations = $this->extractRelations($collection);
-        return $this->attachReferencesToResult($result,$relations);
+        $relations = $this->extractRelations($this->getCollection());
+
+        return $this->attachReferencesToResult(
+            $stack->handle($queryBuilder,$context),
+            $relations
+        );
     }
 
     /**

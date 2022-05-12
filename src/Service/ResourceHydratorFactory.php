@@ -11,6 +11,7 @@ use Tpg\HeadlessBundle\Ast\Walker\SelectFieldsBuilder;
 use Tpg\HeadlessBundle\Hydrator\ConditionBuilder;
 use Tpg\HeadlessBundle\Hydrator\ToManyConditionBuilder;
 use Tpg\HeadlessBundle\Hydrator\ToOneConditionBuilder;
+use Tpg\HeadlessBundle\Middleware\MiddlewareContextBuilder;
 use Tpg\HeadlessBundle\Reference\CollectionResourceReference;
 use Tpg\HeadlessBundle\Reference\Link;
 use Tpg\HeadlessBundle\Reference\RelationToManyReference;
@@ -64,11 +65,11 @@ final class ResourceHydratorFactory
             $relatedIds
         );
 
-        $relatedData = $this->queryService->executeForCollection($builder,$collection);
+        $relatedData = $this->executeBuilder($builder,$collection);
 
         return (new Link($relatedIds,$relatedData))
             ->withTransformation(fn($value)=>$this->removeFields($value,ConditionBuilder::HIDDEN_OWN_ID,ConditionBuilder::HIDDEN_RELATED_ID))
-            ->oneToOne(fn($v)=>$v,fn($v)=>(string)$v[self::HIDDEN_RELATED_FIELD]);
+            ->oneToOne(fn($v)=>$v,fn($v)=>(string)$v[ConditionBuilder::HIDDEN_RELATED_ID]);
 
     }
 
@@ -95,11 +96,11 @@ final class ResourceHydratorFactory
             );
         }
 
-        $relatedData = $this->queryService->executeForCollection($builder,$relatedCollection);
+        $relatedData = $this->executeBuilder($builder,$relatedCollection);
 
         return (new Link($relatedIds,$relatedData))
             ->withTransformation($resultTransformer)
-            ->oneToMany(fn($v)=>$v,fn($v)=>(string)$v[ToManyConditionBuilder::HIDDEN_OWN_ID]);
+            ->oneToMany(fn($v)=>$v,fn($v)=>(string)$v[ConditionBuilder::HIDDEN_OWN_ID]);
     }
 
     private function removeFields(array $data, string ...$keys):array
@@ -109,5 +110,13 @@ final class ResourceHydratorFactory
             static fn(string $key) => !in_array($key, $keys, true),
             ARRAY_FILTER_USE_KEY
         );
+    }
+
+    private function executeBuilder(QueryBuilder $queryBuilder, Collection $collection, array $context=[]):array
+    {
+        $context = MiddlewareContextBuilder::create($context)
+            ->withQueryType(MiddlewareContextBuilder::JOINED)
+            ->toArray();
+        return $this->queryService->executeForCollection($queryBuilder,$collection,$context);
     }
 }

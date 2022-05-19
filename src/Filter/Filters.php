@@ -72,6 +72,35 @@ final class Filters
         $this->conditions[] = $condition;
     }
 
+    public function hasConditionFor(string $property):bool
+    {
+        foreach ($this->conditions as $condition){
+            if($condition->property() === $property){
+                return true;
+            }
+        }
+        foreach ($this->groups as $group) {
+            if($group->hasConditionFor($property)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public function hasConditions():bool
+    {
+        if($this->conditions){
+            return true;
+        }
+
+        foreach ($this->groups as $group) {
+            if($group->hasConditions()){
+                return true;
+            }
+        }
+        return false;
+    }
+
     public function isOr(): bool
     {
         return !$this->isAnd();

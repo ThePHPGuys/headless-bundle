@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace Tpg\HeadlessBundle\Service;
 
 
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Validator\Constraint;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Tpg\HeadlessBundle\Exception\NotFoundException;
 use Tpg\HeadlessBundle\Exception\ValidationException;
 use Tpg\HeadlessBundle\Middleware\PageableContextBuilder;
@@ -14,8 +16,6 @@ use Tpg\HeadlessBundle\Query\Page;
 use Tpg\HeadlessBundle\Query\Pageable;
 use Tpg\HeadlessBundle\Request\ModifyItemRequest;
 use Tpg\HeadlessBundle\Security\Subject\AccessOperation;
-use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 
 final class ItemsService
@@ -124,7 +124,7 @@ final class ItemsService
             $item,
             $this->securityService->filterEntityData($collection, $data, AccessOperation::UPDATE)
         );
-
+        dump($item);
         $violations = $this->validator->validate($item,null,[Constraint::DEFAULT_GROUP,self::UPDATE_VALIDATION_GROUP]);
 
         ValidationException::assertValid($violations);

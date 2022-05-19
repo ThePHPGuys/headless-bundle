@@ -24,17 +24,16 @@ use Tpg\HeadlessBundle\Serializer\PageNormalizer;
 use Tpg\HeadlessBundle\Serializer\ValidationExceptionNormalizer;
 use Tpg\HeadlessBundle\Service\AstFactory;
 use Tpg\HeadlessBundle\Service\DataHydrator;
-use Tpg\HeadlessBundle\Service\ReadExecutor;
 use Tpg\HeadlessBundle\Service\HydratorORM;
 use Tpg\HeadlessBundle\Service\ItemsService;
 use Tpg\HeadlessBundle\Service\QueryService;
+use Tpg\HeadlessBundle\Service\ReadExecutor;
 use Tpg\HeadlessBundle\Service\ResourceHydratorFactory;
 use Tpg\HeadlessBundle\Service\SchemaService;
 use Tpg\HeadlessBundle\Service\SecuredAstFactory;
 use Tpg\HeadlessBundle\Service\SecurityChecker;
 use Tpg\HeadlessBundle\Service\SecurityService;
 use function Symfony\Component\DependencyInjection\Loader\Configurator\service;
-use function Symfony\Component\DependencyInjection\Loader\Configurator\tagged_iterator;
 
 return static function (ContainerConfigurator $container) {
     $services  = $container->services()

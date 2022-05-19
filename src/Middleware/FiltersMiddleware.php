@@ -32,7 +32,7 @@ final class FiltersMiddleware implements Middleware, RestrictQueryTypeMiddleware
         /** @var Filters $filters */
         $filters = $context[FiltersContextBuilder::FILTERS];
 
-        return $filters->getConditions() || !$filters->getGroups();
+        return $filters->hasConditions();
     }
 
 }

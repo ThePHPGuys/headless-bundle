@@ -6,7 +6,6 @@ namespace Tpg\HeadlessBundle\Middleware;
 
 
 use Doctrine\ORM\QueryBuilder;
-use Tpg\HeadlessBundle\Ast\Collection;
 use Tpg\HeadlessBundle\Query\Fields;
 use Tpg\HeadlessBundle\Query\Pageable;
 use Tpg\HeadlessBundle\Query\Sort;
@@ -73,7 +72,8 @@ final class PageableMiddleware implements Middleware, CollectionAwareMiddleware,
 
     private function isPageable(array $context):bool
     {
-        return isset($context[PageableContextBuilder::PAGEABLE]);
+        return isset($context[PageableContextBuilder::PAGEABLE])
+            && $context[PageableContextBuilder::PAGEABLE] instanceof Pageable;
     }
 
     public function restrictedToQueryTypes(): array

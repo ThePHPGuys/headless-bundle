@@ -19,6 +19,11 @@ final class Sort implements \IteratorAggregate
     {
     }
 
+    public function addOrder(Order $order):void
+    {
+        $this->orders[] = $order;
+    }
+
     public function getOrderFor(string $property):Order
     {
         $order = array_filter($this->orders,static fn(Order $o)=>$o->property()===$property);
@@ -39,8 +44,11 @@ final class Sort implements \IteratorAggregate
 
     public function removeOrder(Order $order):void
     {
-        $key = array_search($order,$this->orders);
-        unset($order[$key]);
+        array_splice(
+            $this->orders,
+            array_search($order,$this->orders,true),
+            1
+        );
     }
 
     public function isSorted():bool

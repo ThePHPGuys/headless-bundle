@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace Tpg\HeadlessBundle\Service;
 
 
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Mapping\ClassMetadata;
 use Doctrine\ORM\Mapping\ClassMetadataFactory;
-use Symfony\Component\Validator\Mapping\Factory\MetadataFactoryInterface;
+use Doctrine\ORM\Mapping\ClassMetadataInfo;
 use Tpg\HeadlessBundle\Exception\CollectionNotFound;
 use Tpg\HeadlessBundle\Exception\CompositeKeysAreNotSupported;
 use Tpg\HeadlessBundle\Schema\Collection;
 use Tpg\HeadlessBundle\Schema\Field;
 use Tpg\HeadlessBundle\Schema\Relation;
 use Tpg\HeadlessBundle\Schema\Schema;
-use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\ORM\Mapping\ClassMetadataInfo;
 
 final class SchemaService implements Schema
 {
@@ -124,7 +124,8 @@ final class SchemaService implements Schema
 //        $associationMapping = $this->getCollectionMetadata('owner')->getAssociationMapping('pets');
 //        dump($associationMapping);
 //        dd();
-        $rel = new Relation($collection,$associationMapping['fieldName'], $associationMapping['type'],$referencedCollection);
+        $type = $associationMapping['type']===ClassMetadata::ONE_TO_MANY?Relation::COMPOSITION:Relation::ASSOCIATION;
+        $rel = new Relation($collection,$associationMapping['fieldName'], $associationMapping['type'],$referencedCollection, $type);
 
         if($rel->isToOne()) {
             if (count($associationMapping['joinColumns']) > 1) {

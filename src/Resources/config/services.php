@@ -21,6 +21,7 @@ use Tpg\HeadlessBundle\Schema\Schema;
 use Tpg\HeadlessBundle\Security\Checker;
 use Tpg\HeadlessBundle\Serializer\ItemDenormalizer;
 use Tpg\HeadlessBundle\Serializer\PageNormalizer;
+use Tpg\HeadlessBundle\Serializer\UuidDenormalizer;
 use Tpg\HeadlessBundle\Serializer\ValidationExceptionNormalizer;
 use Tpg\HeadlessBundle\Service\AstFactory;
 use Tpg\HeadlessBundle\Service\DataHydrator;
@@ -58,8 +59,8 @@ return static function (ContainerConfigurator $container) {
     $services->set(HydratorORM::class);
     $services->set(ReadExecutor::class);
     $services->set(ResourceHydratorFactory::class);
-
     $services->set(SecurityService::class);
+
     $services->set(PageNormalizer::class);
     $services->set(ItemDenormalizer::class)->autoconfigure(false);
     $services->set(ValidationExceptionNormalizer::class);
@@ -79,10 +80,14 @@ return static function (ContainerConfigurator $container) {
     $services->set('headless.item.denormalizer.array', ArrayDenormalizer::class)
         ->autoconfigure(false);
 
+    $services->set(UuidDenormalizer::class)
+        ->autoconfigure(false);
+
     $services->set('headless.item.denormalizer',Serializer::class)
         ->autoconfigure(false)
         ->arg('$normalizers',[
             service(ItemDenormalizer::class),
+            service(UuidDenormalizer::class),
             service('serializer.normalizer.datetime'),
             service('headless.item.denormalizer.object'),
             service('headless.item.denormalizer.array')

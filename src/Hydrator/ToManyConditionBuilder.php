@@ -25,15 +25,16 @@ final class ToManyConditionBuilder implements ConditionBuilder
         }
 
         $builder = clone $queryBuilder;
-
+        $ownIdField = $this->getIdField($relation->collection);
+        $relatedIdField = $this->getIdField($relation->relatedCollection);
         $builder
             ->addSelect([
-                sprintf("%s %s", $this->getIdField($relation->collection), self::HIDDEN_OWN_ID ),
-                sprintf("%s %s", $this->getIdField($relation->relatedCollection), self::HIDDEN_RELATED_ID)
+                sprintf("%s %s", $ownIdField, self::HIDDEN_OWN_ID ),
+                sprintf("%s %s", $relatedIdField, self::HIDDEN_RELATED_ID)
             ])
 
             ->join(sprintf('%s.%s',$relation->collection,$relation->name),$relation->relatedCollection)
-            ->where(sprintf('%s IN (:ownId)', self::HIDDEN_OWN_ID))->setParameter(':ownId',$values);
+            ->where(sprintf('%s IN (:ownId)', $ownIdField))->setParameter(':ownId',$values);
 
         return $builder;
     }

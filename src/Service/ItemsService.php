@@ -17,7 +17,6 @@ use Tpg\HeadlessBundle\Query\Pageable;
 use Tpg\HeadlessBundle\Request\ModifyItemRequest;
 use Tpg\HeadlessBundle\Security\Subject\AccessOperation;
 
-
 final class ItemsService
 {
     private SecuredAstFactory $astFactory;
@@ -124,7 +123,7 @@ final class ItemsService
             $item,
             $this->securityService->filterEntityData($collection, $data, AccessOperation::UPDATE)
         );
-        dump($item);
+
         $violations = $this->validator->validate($item,null,[Constraint::DEFAULT_GROUP,self::UPDATE_VALIDATION_GROUP]);
 
         ValidationException::assertValid($violations);
